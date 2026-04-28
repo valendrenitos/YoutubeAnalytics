@@ -24,6 +24,8 @@ def track_subscribers(channel_input: str, csv_file: str = "subscriber_history.cs
         item = response['items'][0]
 
         subs = int(item['statistics']['subscriberCount'])
+        total_views = int(item['statistics']['viewCount'])
+        video_count = int(item['statistics']['videoCount'])
         channel_name = item['snippet']['title']
         today = datetime.now().strftime("%Y-%m-%d")
 
@@ -32,7 +34,7 @@ def track_subscribers(channel_input: str, csv_file: str = "subscriber_history.cs
         with open(csv_file, 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             if not file_exists:
-                writer.writerow(['date', 'channel_name', 'channel_input', 'subscribers'])
+                writer.writerow(['date', 'channel_name', 'channel_input', 'subscribers', 'total_views', 'video_count'])
             writer.writerow([today, channel_name, channel_input, subs])
 
         print(f"✓ [{today}] {channel_name:<30} → {subs:,} subscribers")
@@ -46,11 +48,11 @@ def track_subscribers(channel_input: str, csv_file: str = "subscriber_history.cs
 
 if __name__ == "__main__":
     channels = [
-        "@MrBeast",
-        "@MrBeastGaming",
+        
+        "@Shylily",
         "@PewDiePie",
-        "@Markiplier",
-        "@DudePerfect",
+        "@Silvervale",
+        "@minairyyy",
 
     ]
 
