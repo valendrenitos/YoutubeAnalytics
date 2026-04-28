@@ -1,29 +1,64 @@
+import os
 import csv
 from datetime import datetime
 from googleapiclient.discovery import build
 
-api_key = "YOUR_API_KEY"
-youtube = build('youtube', 'v3', developerKey=api_key)
+API_KEY = os.getenv('YOUTUBE_API_KEY')
 
-def track_subscribers(channel_input, csv_file="subscriber_history.csv"):
-    # Get current subs
-    if channel_input.startswith('@'):
-        req = youtube.channels().list(part='statistics', forHandle=channel_input[1:])
-    else:
-        req = youtube.channels().list(part='statistics', id=channel_input)
-    
-    data = req.execute()
-    subs = int(data['items'][0]['statistics']['subscriberCount'])
-    channel_name = data['items'][0]['snippet']['title'] if 'snippet' in data['items'][0] else "Unknown"
-    
-    today = datetime.now().strftime("%Y-%m-%d")
-    
-    # Append to CSV
-    with open(csv_file, 'a', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow([today, channel_name, channel_input, subs])
-    
-    print(f"[{today}] {channel_name}: {subs:,} subscribers")
+youtube = build('youtube', 'v3', developerKey=API_KEY)
 
-# Run daily
-track_subscribers("@MrBeast")
+def track_subscribers(channel_input: str, csv_file: str = "subscriber_history.csv"):
+    try:
+        if channel_input.startswith('@'):
+            request = youtube.channels().list(
+                part='snippet,statistics',
+                forHandle=channel_input[1:]
+            )
+        else:
+            request = youtube.channels().list(
+                part='snippet,statistics',
+                id=channel_input
+            )
+        
+        response = request.execute()
+        item = response['items'][0]
+
+        subs = int(item['statistics']['subscriberCount'])
+        channel_name = item['snippet']['title']
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        file_exists = os.path.isfile(csv_file)
+        
+        with open(csv_file, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                writer.writerow(['date', 'channel_name', 'channel_input', 'subscribers'])
+            writer.writerow([today, channel_name, channel_input, subs])
+
+        print(f"✓ [{today}] {channel_name:<30} → {subs:,} subscribers")
+        return True
+
+    except Exception as e:
+        print(f"Failed to track {channel_input}: {e}")
+        return False
+
+
+
+if __name__ == "__main__":
+    channels = [
+        "@MrBeast",
+        "@MrBeastGaming",
+        "@PewDiePie",
+        "@Markiplier",
+        "@DudePerfect",
+
+    ]
+
+    print(" Starting YouTube Subscriber Tracker\n")
+    success_count = 0
+    
+    for channel in channels:
+        if track_subscribers(channel):
+            success_count += 1
+    
+    print(f"\nDone! Tracked {success_count}/{len(channels)} channels successfully.")
